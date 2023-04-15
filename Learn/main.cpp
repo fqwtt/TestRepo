@@ -52,6 +52,7 @@ int main() {
 
 	//²âÊÔ
 	auto it = find(v.begin(), v.end(), Person("ddd", 40));
+	//asdasdadads
 	cout << it->name << ":" << it->age << endl;
 	return 0;
 }
