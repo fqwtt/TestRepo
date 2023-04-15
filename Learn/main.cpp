@@ -49,6 +49,8 @@ int main() {
 	v.push_back(p2);
 	v.push_back(p3);
 	v.push_back(p4);
+
+	//²âÊÔ
 	auto it = find(v.begin(), v.end(), Person("ddd", 40));
 	cout << it->name << ":" << it->age << endl;
 	return 0;
