@@ -16,19 +16,10 @@
 #include <chrono>
 #include <Windows.h>
 #include <fstream>
+#include <functional>
 #include "myArray.hpp"
 
 using namespace std;
-
-template <typename T>
-void print(const T& arr) {
-	for (auto& x : arr) {
-		cout << x << ", ";
-	}
-	cout << endl;
-}
-
-
 
 class Person {
 public:
@@ -38,47 +29,28 @@ public:
 	}
 	string name;
 	int age;
-
-};
-
-bool compare(const Person& p1, const Person& p2) {
-	if (p1.name < p2.name) {
-		return true;
-	}
-	else if (p1.name > p2.name) {
-		return false;
-	}
-	else {
-		if (p1.age > p2.age) {
+	bool operator==(const Person& obj) {
+		if (this->name == obj.name && this->age == obj.age) {
 			return true;
 		}
 		else {
 			return false;
 		}
 	}
-}
+};
 
 int main() {
-	vector<Person> l;
-	string nameSeed = "BADCGFE";
-	for (int i = 0; i < 7; i++) {
-		int age = rand() % 30 + 10;
-		string name = "";
-		name += nameSeed[i];
-		Person p(name, age);
-		l.push_back(p);
-	}
-	cout << "ÅÅÐòÇ°" << endl;
-	for (auto x : l) {
-		cout << x.name << ":" << x.age << endl;
-	}
-	sort(l.begin(), l.end(), compare);
-
-	cout << "ÅÅÐòºó" << endl;
-	for (auto x : l) {
-		cout << x.name << ":" << x.age << endl;
-	}
-
+	Person p1("aaa", 10);
+	Person p2("bbb", 20);
+	Person p3("ccc", 30);
+	Person p4("ddd", 40);
+	vector<Person> v;
+	v.push_back(p1);
+	v.push_back(p2);
+	v.push_back(p3);
+	v.push_back(p4);
+	auto it = find(v.begin(), v.end(), Person("ddd", 40));
+	cout << it->name << ":" << it->age << endl;
 	return 0;
 }
 
