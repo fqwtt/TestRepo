@@ -27,6 +27,8 @@ int main()
 	int* dev_b = 0;
 	int* dev_c = 0;
 	int size = 3;
+
+
 	cudaError_t cudaStatus = cudaSetDevice(0);
 	if (cudaStatus != cudaSuccess) {
 		cout << "cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?" << endl;
