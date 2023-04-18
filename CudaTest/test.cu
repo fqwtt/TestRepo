@@ -53,9 +53,9 @@ int main()
 	PersonAddKernel << <block_size, thread_size >> > (dev_a, dev_b, dev_c);
 	cudaDeviceSynchronize();
 	cudaMemcpy(C.get(), dev_c, size * sizeof(Person), cudaMemcpyDeviceToHost);
-	for (int i = 0; i < size; i++) {
+	/*for (int i = 0; i < size; i++) {
 		cout << C[i].age << " " << C[i].height << endl;
-	}
+	}*/
 	
 	cudaFree(dev_a);
 	cudaFree(dev_b);

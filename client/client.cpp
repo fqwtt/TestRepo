@@ -1,5 +1,6 @@
 #include <iostream>
-#include <winsock.h>
+#include <winsock2.h>
+#include <WS2tcpip.h>
 #pragma comment(lib,"ws2_32.lib")
 
 using std::cout; using std::endl;
@@ -20,7 +21,8 @@ int main() {
 	initialization();
 	// fill server information
 	server_addr.sin_family = AF_INET;
-	server_addr.sin_addr.S_un.S_addr = inet_addr("192.168.1.70");
+	//server_addr.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
+	inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr.S_un.S_addr);
 	server_addr.sin_port = htons(9999);
 	// create socket
 	s_server = socket(AF_INET, SOCK_STREAM, 0);
