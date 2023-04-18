@@ -23,7 +23,10 @@ int main() {
 	server_addr.sin_family = AF_INET;
 	//server_addr.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
 	inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr.S_un.S_addr);
-	server_addr.sin_port = htons(9999);
+	int port;
+	cout << "port£º";
+	std::cin >> port;
+	server_addr.sin_port = htons(port);
 	// create socket
 	s_server = socket(AF_INET, SOCK_STREAM, 0);
 	if (connect(s_server, (SOCKADDR*)&server_addr, sizeof(SOCKADDR)) == SOCKET_ERROR) {
@@ -42,14 +45,14 @@ int main() {
 			cout << "Send failed!" << endl;
 			break;
 		}
-		recv_len = recv(s_server, recv_buf, 100, 0);
+		/*recv_len = recv(s_server, recv_buf, 100, 0);
 		if (recv_len < 0) {
 			cout << "Receive failed" << endl;
 			break;
 		}
 		else {
 			cout << "Client message:" << recv_buf << endl;
-		}
+		}*/
 	}
 	// close socket
 	closesocket(s_server);
