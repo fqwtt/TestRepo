@@ -2,17 +2,24 @@
 #include <thread>
 #include <WS2tcpip.h>
 #include <WinSock2.h>
+#include <vector>
+#include "mySocket.h"
 //#include <Windows.h>
 #pragma comment(lib, "ws2_32.lib")
 using namespace std;
 
-class Person {
-public:
-	Person(const std::string& name, int age) : name_(name), age_(age) {}
-	std::string name_;
-	int age_;
-};
-
+void socket_thread(SOCKET serverSocket, SOCKET clientSocket, int port) {
+	char recv_buf[1024];
+	while (true) {
+		int recvBytes = recv(clientSocket, recv_buf, sizeof(recv_buf), 0);
+		if (recvBytes < 0) {
+			cout << "Receive failed" << endl;
+			break;
+		}
+		cout << port << " say: " << recv_buf << endl;
+	}
+	cout << "线程结束" << endl;
+}
 
 int main() {
 	//初始化winsock
@@ -28,44 +35,55 @@ int main() {
 		return -1;
 	}
 
-	// 创建服务器套接字
-	SOCKET serverSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (serverSocket == INVALID_SOCKET) {  // INVALID_SOCKET = 18446744073709551615
-		cerr << "Failed to create server socket" << endl;
-		return -1;
-	}
+	//MySocket serverSocket(9999);
 
-	// 绑定服务器套接字到本地IP和端口号
-	SOCKADDR_IN serverAddr;
-	serverAddr.sin_family = AF_INET;
-	serverAddr.sin_port = htons(9999);
-	inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr.S_un.S_addr);
-	if (bind(serverSocket, (SOCKADDR*)&serverAddr, sizeof(SOCKADDR)) == SOCKET_ERROR) {
-		cerr << "Socket binding failed!" << endl;
-		closesocket(serverSocket);
-		WSACleanup();
-		return -1;
+	/*int cnt = 0;
+	while (true) {
+		SOCKET clientSocket = accept(serverSocket.getSocket(), NULL, NULL);
+		if (clientSocket == INVALID_SOCKET) {
+			cerr << "Failed to accept client connection" << endl;
+			serverSocket.closeSocket();
+			WSACleanup();
+			return -1;
+		}
+		while (true) {
+			char recvBuf[1024];
+			int recvBytes = recv(clientSocket, recvBuf, sizeof(recvBuf), 0);
+			if (recvBytes < 0) {
+				cout << "Receive failed" << endl;
+				break;
+			}
+			cnt += 1;
+			cout << cnt << ":" << recvBuf << endl;
+
+		}
+	}*/
+	int port = 9900;
+	vector<thread> threads;
+	vector<MySocket> mysockets;
+
+	while (true) {
+		mysockets.emplace_back(MySocket(port));
+		cout << "port " << port << " is listing" << endl;
+		
+		SOCKET clientSocket = accept(mysockets.back().getSocket(), NULL, NULL);
+		if (clientSocket == INVALID_SOCKET) {
+			cerr << "Failed to accept client connection" << endl;
+			mysockets.back().closeSocket();
+			WSACleanup();
+			break;
+		}
+		threads.emplace_back(thread(socket_thread, mysockets.back().getSocket(), clientSocket, port));
+		port += 1;
 	}
-	if (listen(serverSocket, SOMAXCONN) == SOCKET_ERROR) {
-		cerr << "Failed to listen to client connection requests" << endl;
-		closesocket(serverSocket);
-		WSACleanup();
-		return -1;
+	for (auto& t : threads) {
+		t.join();
 	}
-	SOCKET clientSocket = accept(serverSocket, NULL, NULL);
-	if (clientSocket == INVALID_SOCKET) {
-		cerr << "Failed to accept client connection" << endl;
-		closesocket(serverSocket);
-		WSACleanup();
-		return -1;
-	}
-	char recvBuf[1024];
-	int recvBytes = recv(clientSocket, recvBuf, sizeof(recvBuf), 0);
-	cout << recvBuf << endl;
 
 	system("pause");
+
 	// 关闭套接字
-	closesocket(serverSocket);
+
 	WSACleanup();
 	return 0;
 }
