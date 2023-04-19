@@ -10,9 +10,9 @@
 
 using namespace std;
 
-map<SOCKET, SOCKET> mp;
+vector<SOCKET> clientSockets;
 void initwinsock();
-void socket_recv_thread(SOCKET clientSocket, int port);
+void socket_recv_thread(MySocket clientSocket);
 
 int main() {
 
@@ -20,21 +20,12 @@ int main() {
 	int port = 9900;
 	vector<thread> recvThreads;
 	vector<MySocket> mysockets;
-
-	while (true) {
-		mysockets.emplace_back(MySocket(port));
-		cout << "port " << port << " is listing" << endl;
-		SOCKET clientSocket = accept(mysockets.back().getSocket(), NULL, NULL);
-		if (clientSocket == INVALID_SOCKET) {
-			cerr << "Failed to accept client connection" << endl;
-			mysockets.back().closeSocket();
-			WSACleanup();
-			break;
-		}
-		mp.insert(make_pair(mysockets.back().getSocket(), clientSocket));
-		recvThreads.emplace_back(thread(socket_recv_thread, clientSocket, port));
-
-		port += 1;
+	int socketNum = 10;
+	for (int i = 0; i < socketNum; i++) {
+		mysockets.emplace_back(MySocket(port + i));
+	}
+	for (MySocket& socket : mysockets) {
+		recvThreads.emplace_back(thread(socket_recv_thread, socket));
 	}
 	for (auto& t : recvThreads) {
 		t.join();
@@ -61,22 +52,35 @@ void initwinsock() {
 	}
 }
 
-void socket_recv_thread(SOCKET clientSocket, int port) {
+void socket_recv_thread(MySocket serverSocket) {
 	char recv_buf[1024];
-	while (true) {
-		int recvBytes = recv(clientSocket, recv_buf, sizeof(recv_buf), 0);
-		if (recvBytes < 0) {
-			cout << "Receive failed" << endl;
+	while (1) {
+		SOCKET clientSocket = accept(serverSocket.getSocket(), NULL, NULL);
+		if (clientSocket == INVALID_SOCKET) {
+			cerr << "Failed to accept client connection" << endl;
+			serverSocket.closeSocket();
+			WSACleanup();
 			break;
 		}
-		string send_str = to_string(port) + " say: " + string(recv_buf) + "\0";
-
-		for (auto& socket : mp) {
-			if (socket.second == clientSocket) {
-				continue;
+		clientSockets.push_back(clientSocket);
+		while (1) {
+			int recvBytes = recv(clientSocket, recv_buf, sizeof(recv_buf), 0);
+			if (recvBytes < 0) {
+				for (auto it = clientSockets.begin(); it != clientSockets.end(); it++) {
+					if (*it == clientSocket) {
+						clientSockets.erase(it);
+						break;
+					}
+				}
+				break;
 			}
-			int sendBytes = send(socket.second, send_str.c_str(), send_str.size()+1, 0);
+			string send_str = to_string(serverSocket.getPort()) + " say: " + string(recv_buf) + "\0";
+			for (SOCKET socket : clientSockets) {
+				if (socket == clientSocket) {
+					continue;
+				}
+				int sendBytes = send(socket, send_str.c_str(), send_str.size() + 1, 0);
+			}
 		}
 	}
-	cout << port << "¶Ë¿ÚÍË³ö" << endl;
 }
