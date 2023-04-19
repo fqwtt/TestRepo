@@ -12,6 +12,11 @@ SOCKET& MySocket::getSocket() {
 	return this->m_socket;
 }
 
+// 获取端口号
+int MySocket::getPort() {
+	return this->m_port;
+}
+
 // 关闭套接字
 void MySocket::closeSocket() {
 	closesocket(this->m_socket);

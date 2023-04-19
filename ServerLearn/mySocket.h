@@ -15,6 +15,9 @@ public:
 	// 获取套接字
 	SOCKET& getSocket();
 
+	// 获取端口号
+	int getPort();
+
 	// 关闭套接字
 	void closeSocket();
 private:
