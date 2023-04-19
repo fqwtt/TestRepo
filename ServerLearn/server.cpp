@@ -6,54 +6,21 @@
 #include <map>
 #include <mutex>
 #include "mySocket.h"
-//#include <Windows.h>
 #pragma comment(lib, "ws2_32.lib")
+
 using namespace std;
 
-
-
 map<SOCKET, SOCKET> mp;
-mutex mtx;
-
-void socket_recv_thread(SOCKET serverSocket, SOCKET clientSocket, int port) {
-	char recv_buf[1024];
-	while (true) {
-		int recvBytes = recv(clientSocket, recv_buf, sizeof(recv_buf), 0);
-		if (recvBytes < 0) {
-			cout << "Receive failed" << endl;
-			break;
-		}
-		for (auto& socket : mp) {
-			int sendBytes = send(socket.second, recv_buf, sizeof(recv_buf), 0);
-		}
-		//cout << port << " say: " << recv_buf << endl;
-	}
-	cout << "线程结束" << endl;
-}
-
-void socket_send_thread(SOCKET serverSocket, SOCKET clientSocket, int port) {
-	char send_buf[1024];
-	while (true) {
-		cout << "please enter the reply message:";
-		cin >> send_buf;
-		int sendBytes = send(clientSocket, send_buf, sizeof(send_buf), 0);
-		if (sendBytes < 0) {
-			cout << "Send failed" << endl;
-			break;
-		}
-	}
-}
-
 void initwinsock();
+void socket_recv_thread(SOCKET clientSocket, int port);
+
 int main() {
 
 	initwinsock();
-
 	int port = 9900;
 	vector<thread> recvThreads;
-	vector<thread> sendThreads;
 	vector<MySocket> mysockets;
-	
+
 	while (true) {
 		mysockets.emplace_back(MySocket(port));
 		cout << "port " << port << " is listing" << endl;
@@ -65,19 +32,15 @@ int main() {
 			break;
 		}
 		mp.insert(make_pair(mysockets.back().getSocket(), clientSocket));
-		recvThreads.emplace_back(thread(socket_recv_thread, mysockets.back().getSocket(), clientSocket, port));
-		/*sendThreads.emplace_back(thread(socket_send_thread, mysockets.back().getSocket(), clientSocket, port));*/
+		recvThreads.emplace_back(thread(socket_recv_thread, clientSocket, port));
+
 		port += 1;
 	}
-
 	for (auto& t : recvThreads) {
 		t.join();
 	}
-
 	system("pause");
-
 	// 关闭套接字
-
 	WSACleanup();
 	return 0;
 }
@@ -96,4 +59,24 @@ void initwinsock() {
 		cerr << "Failed to initialize Winsock" << endl;
 		return;
 	}
+}
+
+void socket_recv_thread(SOCKET clientSocket, int port) {
+	char recv_buf[1024];
+	while (true) {
+		int recvBytes = recv(clientSocket, recv_buf, sizeof(recv_buf), 0);
+		if (recvBytes < 0) {
+			cout << "Receive failed" << endl;
+			break;
+		}
+		string send_str = to_string(port) + " say: " + string(recv_buf) + "\0";
+
+		for (auto& socket : mp) {
+			if (socket.second == clientSocket) {
+				continue;
+			}
+			int sendBytes = send(socket.second, send_str.c_str(), send_str.size()+1, 0);
+		}
+	}
+	cout << port << "端口退出" << endl;
 }
