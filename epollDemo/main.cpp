@@ -19,10 +19,9 @@ int main(){
 		cout<<"Epoll create error!"<<endl;
 	}
 	epoll_event event,events[MAX_EVENTS];
-	ev.data.fd=serv_sock.getSocket();
-	ev.events=EPOLLIN|EPOLLET;
-	epoll_ctl(epfd,EPOLL_CTL_ADD,s1.getSocket(),&ev);
-	char recv_buf[1024];
+	event.data.fd=serv_sock.getSocket();
+	event.events=EPOLLIN|EPOLLET;
+	epoll_ctl(epfd,EPOLL_CTL_ADD,serv_sock.getSocket(),&event);
 	while(1){
 		int n=epoll_wait(epfd,events,10,-1);
 		if(n==-1){
@@ -30,25 +29,21 @@ int main(){
 		}
 		for(int i=0;i<n;i++){
 			int fd=events[i].data.fd;
-			if(fd==s1.getSocket()){
-				int client=accept(s1.getSocket(),NULL,NULL);
+			if(fd==serv_sock.getSocket()){
+				int client=accept(serv_sock.getSocket(),NULL,NULL);
 				if (client==-1){
 					cout<<"failed to accept client connection"<<endl;
 				}
-				ev.data.fd=client;
-				epoll_ctl(epfd,EPOLL_CTL_ADD,client,&ev);
+				event.data.fd=client;
+				epoll_ctl(epfd,EPOLL_CTL_ADD,client,&event);
 			}
 			else{
-
-				//int recvlen=recv(fd,recv_buf,sizeof(recv_buf),0);
-
-				const char* head =
+				const char* response =
 					"HTTP/1.1 200 OK\r\n"
 					"Content-Type: text/html\r\n"
 					"\r\n"
 					"<html><body><h1>Hello, world!</h1></body></html>\r\n";
-				send(fd, head, strlen(head), 0);
-				close(fd);
+				send(fd, response, strlen(response), 0);
 			}
 		}
 	}
